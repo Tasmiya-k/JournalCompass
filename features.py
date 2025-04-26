@@ -23,9 +23,9 @@ class QAFormat(BaseModel):
 
 # App configuration with fixed API keys
 class Config:
-    MISTRAL_API_KEY = "3UR9RkUF4od4OG4fwu10c94djsxGf3S8"
-    GROQ_API_KEY = "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"
-    ELEVENLABS_API_KEY = "sk_4301948c936feb475bdc40082599c5ab8eba5f1fdeb93440"
+    MISTRAL_API_KEY = ""
+    GROQ_API_KEY = ""
+    ELEVENLABS_API_KEY = ""
 
 # Initialize clients
 @st.cache_resource
