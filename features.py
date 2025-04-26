@@ -23,9 +23,9 @@ class QAFormat(BaseModel):
 
 # App configuration with fixed API keys
 class Config:
-    MISTRAL_API_KEY = ""
-    GROQ_API_KEY = ""
-    ELEVENLABS_API_KEY = ""
+    MISTRAL_API_KEY = "3UR9RkUF4od4OG4fwu10c94djsxGf3S8"
+    GROQ_API_KEY = "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"
+    ELEVENLABS_API_KEY = "sk_4301948c936feb475bdc40082599c5ab8eba5f1fdeb93440"
 
 # Initialize clients
 @st.cache_resource
@@ -280,7 +280,13 @@ def text_to_speech(intro, qa_pairs, outro, elevenlabs_client):
             )
             intro_path = os.path.join(temp_dir, "temp_intro.mp3")
             save(intro_audio, intro_path)
-            audio_segments.append(AudioSegment.from_mp3(intro_path))
+            
+            # Check if FFmpeg is available before attempting to load audio
+            try:
+                audio_segments.append(AudioSegment.from_mp3(intro_path))
+            except FileNotFoundError:
+                st.error("FFmpeg not found. Please install FFmpeg and make sure it's in your PATH.")
+                return None
         
         # Generate Q&A
         for idx, qa in enumerate(qa_pairs):
@@ -329,17 +335,30 @@ def text_to_speech(intro, qa_pairs, outro, elevenlabs_client):
             audio_bytes = f.read()
         
         return audio_bytes
+    except Exception as e:
+        st.error(f"Audio processing error: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
+        return None
     finally:
-        # Ensure cleanup happens even if there's an error
+        # Use a separate try/except for cleanup to avoid masking the main error
         try:
-            shutil.rmtree(temp_dir)
+            # Attempt to explicitly close any file handles
+            import gc
+            gc.collect()  # Encourage Python to clean up resources
+            
+            # Add a small delay to allow file operations to complete
+            import time
+            time.sleep(1)
+            
+            shutil.rmtree(temp_dir, ignore_errors=True)
         except Exception as e:
             st.warning(f"Failed to clean up temporary files: {e}")
 
 def get_binary_file_downloader_html(bin_data, file_label='File', file_name='download.mp3'):
     """Generates HTML code for file download link."""
-    b64 = base64.b64encode(bin_data).decode()
-    return f'<a href="data:application/octet-stream;base64,{b64}" download="{file_name}">{file_label}</a>'
+    b64 = base64.b64encode(bin_data or b'').decode()
+
 
 # Main app
 def main():
